@@ -34,7 +34,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "📊 تحلیل روزانه، هفتگی و ماهیانه می‌دهد\n"
         "📰 اخبار محلی منطقه شما را بررسی می‌کند\n"
         "🥇 پیشنهاد خرید/فروش طلا می‌دهد\n\n"
-        "لطفاً *نام و نام‌خانوادگی* خود را وارد کنید:",
+        "لطفاً *نام* خود را وارد کنید:",
         parse_mode='Markdown'
     )
     return NAME
