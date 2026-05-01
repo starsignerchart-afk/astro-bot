@@ -56,16 +56,52 @@ async def get_birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text.strip()
     try:
         parts = text.replace('-', '/').split('/')
+        if len(parts) != 3:
+            raise ValueError("Invalid format")
         day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
-        context.user_data['birth_date'] = datetime(year, month, day)
-        context.user_data['birth_date_str'] = text
-    except:
-        await update.message.reply_text("❌ فرمت اشتباه! مثال: `15/03/1990`", parse_mode='Markdown')
+        
+        # Reject Jalali (1300-1500) and Hijri (1300-1500) dates
+        if 1300 <= year <= 1500:
+            await update.message.reply_text(
+                "❌ *تاریخ شمسی یا قمری قبول نیست!*\n\n"
+                "لطفاً تاریخ تولد را به *میلادی* وارد کنید.\n\n"
+                "📅 مثال:\n"
+                "• متولد ۷ مهر ۱۳۵۴ → `07/10/1975`\n"
+                "• متولد ۱۵ فروردین ۱۳۶۹ → `03/04/1990`\n\n"
+                "برای تبدیل تاریخ می‌توانید از سایت time.ir استفاده کنید.",
+                parse_mode='Markdown'
+            )
+            return BIRTH_DATE
+        
+        # Validate Gregorian date range (1900-2024)
+        if not (1900 <= year <= 2024):
+            await update.message.reply_text(
+                "❌ سال باید بین ۱۹۰۰ تا ۲۰۲۴ میلادی باشد.\n"
+                "مثال: `15/03/1990`",
+                parse_mode='Markdown'
+            )
+            return BIRTH_DATE
+        
+        # Validate month and day
+        if not (1 <= month <= 12) or not (1 <= day <= 31):
+            raise ValueError("Invalid date")
+        
+        birth_date = datetime(year, month, day)
+        context.user_data['birth_date'] = birth_date
+        context.user_data['birth_date_str'] = f"{day:02d}/{month:02d}/{year}"
+        
+    except ValueError:
+        await update.message.reply_text(
+            "❌ فرمت اشتباه است!\n\n"
+            "📅 فرمت صحیح: `روز/ماه/سال میلادی`\n"
+            "مثال: `15/03/1990` یا `07/10/1975`",
+            parse_mode='Markdown'
+        )
         return BIRTH_DATE
 
     await update.message.reply_text(
         "⏰ *ساعت تولد* خود را وارد کنید:\n"
-        "فرمت: ساعت:دقیقه — مثال: `14:30`\n"
+        "فرمت: ساعت:دقیقه — مثال: `14:30` یا `17:00`\n"
         "_(اگر نمی‌دانید `12:00` وارد کنید)_",
         parse_mode='Markdown'
     )
