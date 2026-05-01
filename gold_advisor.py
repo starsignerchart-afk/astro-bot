@@ -122,45 +122,62 @@ async def get_gold_recommendation(profile: dict) -> str:
         local_gram = usd_gram * rate
         local_display = f"{local_gram:.2f} {currency_sym}/گرم"
 
-    sign_fa = SIGN_FA.get(sun_sign(bd), '')
+    # Get astrological signs
+    from astrology import sun_sign, moon_sign, rising_sign, SIGN_FA
+    sun = sun_sign(bd)
+    moon = moon_sign(bd, bh)
+    rising = rising_sign(bd, bh, bm, bp)
+    
+    sun_fa = SIGN_FA.get(sun, sun)
+    moon_fa = SIGN_FA.get(moon, moon)
+    rising_fa = SIGN_FA.get(rising, rising)
+    
     today = datetime.now().strftime('%Y/%m/%d')
 
-    prompt = f"""تو یک مشاور مالی و متخصص بازار طلا هستی. به فارسی روان بنویس.
+    prompt = f"""تو یک مشاور مالی و متخصص بازار طلا هستی که تحلیل نجومی هم داری. به فارسی روان بنویس.
 
 اطلاعات کاربر:
-- نام: {name} | برج: {sign_fa}
-- موقعیت: {location} | تاریخ: {today}
+- نام: {name}
+- برج خورشید: {sun_fa}
+- برج ماه: {moon_fa}
+- طالع: {rising_fa}
+- موقعیت: {location}
+- تاریخ امروز: {today}
 
 قیمت‌های فعلی طلا (منبع: {price_source}):
 - قیمت جهانی: ${usd_oz:,.0f} دلار/اونس
 - هر گرم طلای 24 عیار: ${usd_gram:.2f} دلار
 - قیمت محلی: {local_display}
-- تغییر: {change:.2f}%
+- تغییر امروز: {change:.2f}%
 
 با جستجو در اینترنت، آخرین اخبار بازار طلا را بررسی کن و پیشنهاد دقیق بده:
 
 🥇 *مشاور طلا — {today}*
 
 1. 📊 وضعیت فعلی بازار جهانی طلا
-2. 📰 مهم‌ترین اخبار مؤثر بر طلا (امروز)
+2. 📰 مهم‌ترین اخبار مؤثر بر قیمت طلا (امروز)
 3. 💹 روند کوتاه‌مدت (صعودی/نزولی/رنجی)
 4. 📍 وضعیت بازار طلا در {location}
-5. 🎯 **پیشنهاد امروز: خرید / فروش / نگهداری** (صریح بگو)
-6. 💡 دلایل این پیشنهاد
-7. ⚠️ ریسک‌های موجود
-8. 📅 بهترین زمان اقدام
-9. 💰 اگر {currency_sym if currency_code != 'IRR' else '10 میلیون تومان'} دارم چه کنم؟
+5. 🌟 **تحلیل نجومی**: بر اساس برج {sun_fa} (خورشید)، {moon_fa} (ماه) و طالع {rising_fa}، آیا امروز برای این شخص روز مناسبی برای خرید/فروش طلاست؟
+6. 🎯 **پیشنهاد نهایی**: خرید / فروش / نگهداری (صریح و روشن)
+7. 💡 دلایل پیشنهاد (هم از نظر بازار هم از نظر نجومی)
+8. ⚠️ ریسک‌های موجود
+9. 📅 بهترین زمان اقدام (امروز/این هفته/صبر کنید)
+10. 💰 اگر {currency_sym if currency_code != 'IRR' else '10 میلیون تومان'} دارم چه کنم؟
 
-صریح، دقیق و کاربردی باش. از ایموجی استفاده کن."""
+پیشنهاد باید مشخص باشد: **خرید**، **فروش**، یا **نگهداری/صبر کنید**.
+تحلیل نجومی باید با تحلیل بازار ترکیب شود تا پیشنهاد عملی باشد.
+از ایموجی استفاده کن."""
 
     ai = ask_gemini_gold(prompt)
 
     header = (f"🥇 *مشاور طلا — {today}*\n"
-              f"👤 {name} | 📍 {location}\n\n"
+              f"👤 {name} | 📍 {location}\n"
+              f"🌟 {sun_fa} ☀️ | {moon_fa} 🌙 | {rising_fa} ⬆️\n\n"
               f"💵 قیمت جهانی: ${usd_oz:,.0f}/اونس\n"
               f"⚖️ {local_display}\n"
               f"📊 تغییر: {'📈' if change >= 0 else '📉'} {change:.2f}%\n"
-              f"🔗 منبع قیمت: {price_source}\n\n"
+              f"🔗 منبع: {price_source}\n\n"
               f"━━━━━━━━━━━━━━━━\n\n")
 
     if ai:
